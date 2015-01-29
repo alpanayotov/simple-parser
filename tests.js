@@ -163,6 +163,30 @@ QUnit.test( "parser.doOL", function( assert ) {
 		1,
 		"OL is created"
 	);
+});
 
+QUnit.test('parser.extractCodeFragment', function( assert ) {
+	var input = 'Lorem ipsum `dolor` sit amet';
+	var parser = new Parser( input );
 
+	parser.extractCodeFragment();
+	assert.ok(
+		parser.text.indexOf('dolor') === -1,
+		'Code fragment are extracted'
+	);
+
+});
+
+QUnit.test('Integration Test', function( assert ) {
+
+	var input = '';
+	var output = $('#task-' + i + '-out' );
+
+	var parser = new Parser( input );
+
+	parser.parse();
+
+	assert.equal(
+		parser.text === output
+	);
 });
