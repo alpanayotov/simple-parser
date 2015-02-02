@@ -24,7 +24,7 @@ var Parser = ( function(){
 	}
 
 	Parser.prototype.doHrs = function() {
-		this.text = this.text.replace( /^[ \t]*\-{4,}$[ \t]*/g, '<hr />');
+		this.text = this.text.replace( /^[ \t]*\-{4,}$[ \t]*/gm, '<hr />');
 	}
 
 	Parser.prototype.doUL = function(){
@@ -40,33 +40,22 @@ var Parser = ( function(){
 	}
 
 	Parser.prototype.extractCodeFragment = function(){
-		var parser = this;
 		var simplePattern = /`(.+?)`/g;
 		var complexPattern = /^\{\{\{$([\s\S]+?)^\}\}\}$/gm;
 
-		var patterns = [simplePattern, complexPattern ];
-		var length = patterns.length;
+		this._extractCodeFragmentBasedOnGroup( 'inline', simplePattern );
+		this._extractCodeFragmentBasedOnGroup( 'fenced', complexPattern );
+	}
+
+	Parser.prototype._extractCodeFragmentBasedOnGroup = function( type, pattern ){
+		var parser = this;
 		
-		
-		this.text = this.text.replace(simplePattern, function( matches, item ){
+		this.text = this.text.replace( pattern, function( matches, item ){
 			while( true ) {
-				token = Math.random();
+				token = Math.random() * (10000 - 1 + 1) + 10000;
 
 				if ( parser.text.indexOf( token ) === -1 ){
-					parser.codeFragments['inline'][ token ] = item;
-					break;
-				}
-			}
-
-			return token;
-		});
-
-		this.text = this.text.replace(complexPattern, function( matches, item ){
-			while( true ) {
-				token = Math.random();
-
-				if ( parser.text.indexOf( token ) === -1 ){
-					parser.codeFragments['fenced'][ token ] = item;
+					parser.codeFragments[ type ][ token ] = item;
 					break;
 				}
 			}
@@ -84,20 +73,18 @@ var Parser = ( function(){
 	Parser.prototype._replaceBasedOnGroup = function( type ) {
 		var parts = this.codeFragments[ type ];
 
-		for ( var item in parts ) {
+		var before = '<code>';
+		var after = '</code>';
 
-			var replacement;
-
-			if ( type === 'inline' ) {
-				replacement = '<code>' + parts[item] + '</code>';
-			} else if ( type === 'fenced' ) {
-				replacement = '<pre><code>' + parts[item] + '</code></pre>';
-			}
-
-			if ( replacement ) {
-				this.text = this.text.replace( item, replacement );
-			}
+		if ( type === 'fenced' ) {
+			before = '<pre><code>';
+			after = '</code></pre>';
 		}
+
+		for ( var item in parts ) {
+			this.text = this.text.replace( item, before + parts[item] + after );
+		}
+
 
 		return this.text;
 
@@ -105,10 +92,10 @@ var Parser = ( function(){
 
 	Parser.prototype.parse = function() {
 		this.extractCodeFragment();
-		this.doBold();
 		this.doHeadings();
-		this.doUl();
+		this.doUL();
 		this.doOL();
+		this.doBold();
 		this.doLinks();
 		this.doHrs();
 		this.replaceCodeFragments();
